@@ -70,6 +70,19 @@ Typischer Ablauf:
 
 ## 9) Release-Archiv erstellen
 
+Schnellster Weg im Projekt:
+
+```bash
+./scripts/release.sh
+```
+
+Ergebnis:
+
+- versionierte ZIP unter `dist/`, z. B. `dist/hochzeit-geschenkeliste.1.1.0.zip`
+- Inhalt wird automatisch anhand von `.distignore` bereinigt
+
+---
+
 Empfohlen mit WP-CLI (nutzt `.distignore`):
 
 ```bash

@@ -13,4 +13,5 @@ assets/README-ASSETS.md
 
 # Local build artifacts
 assets-package.zip
-
+dist
+scripts
