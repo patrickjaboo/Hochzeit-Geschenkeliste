@@ -70,19 +70,6 @@ Typischer Ablauf:
 
 ## 9) Release-Archiv erstellen
 
-Schnellster Weg im Projekt:
-
-```bash
-./scripts/release.sh
-```
-
-Ergebnis:
-
-- versionierte ZIP unter `dist/`, z. B. `dist/hochzeit-geschenkeliste.1.1.0.zip`
-- Inhalt wird automatisch anhand von `.distignore` bereinigt
-
----
-
 Empfohlen mit WP-CLI (nutzt `.distignore`):
 
 ```bash
@@ -93,9 +80,10 @@ wp dist-archive . ./dist --create-target-dir --plugin-dirname=hochzeit-geschenke
 Alternative ohne WP-CLI:
 
 ```bash
-mkdir -p dist
+PLUGIN_VERSION="$(awk -F': ' '/^[[:space:]]*\\* Version:/ {print $2; exit}' hochzeit-geschenkeliste.php | xargs)"
+mkdir -p /private/tmp/plugin-release
 rsync -av --delete \
   --exclude-from='.distignore' \
-  ./ ./dist/hochzeit-geschenkeliste
-cd dist && zip -r hochzeit-geschenkeliste.zip hochzeit-geschenkeliste
+  ./ /private/tmp/plugin-release/hochzeit-geschenkeliste
+cd /private/tmp/plugin-release && zip -r "hochzeit-geschenkeliste.${PLUGIN_VERSION}.zip" hochzeit-geschenkeliste
 ```

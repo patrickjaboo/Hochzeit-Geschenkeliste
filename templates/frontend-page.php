@@ -1,3 +1,9 @@
+<?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+?>
+
 <div class="geschenkeliste-frontend">
     <h2><?php echo esc_html($frontend_texts['title']); ?></h2>
     <p class="geschenkeliste-intro"><?php echo nl2br(esc_html($frontend_texts['intro'])); ?></p>
@@ -6,11 +12,11 @@
         <p class="no-geschenke"><?php echo esc_html($frontend_texts['empty']); ?></p>
     <?php else: ?>
         <div class="geschenke-grid">
-            <?php foreach ($geschenke as $geschenk): ?>
-                <div class="geschenk-item <?php echo $geschenk->ist_reserviert ? 'reserved' : 'available'; ?>" data-id="<?php echo esc_attr($geschenk->id); ?>">
+            <?php foreach ($geschenke as $geschenkeliste_geschenk): ?>
+                <div class="geschenk-item <?php echo $geschenkeliste_geschenk->ist_reserviert ? 'reserved' : 'available'; ?>" data-id="<?php echo esc_attr($geschenkeliste_geschenk->id); ?>">
                     <div class="geschenk-image">
-                        <?php if ($geschenk->bild_url): ?>
-                            <img src="<?php echo esc_url($geschenk->bild_url); ?>" alt="<?php echo esc_attr($geschenk->titel); ?>">
+                        <?php if ($geschenkeliste_geschenk->bild_url): ?>
+                            <img src="<?php echo esc_url($geschenkeliste_geschenk->bild_url); ?>" alt="<?php echo esc_attr($geschenkeliste_geschenk->titel); ?>">
                         <?php else: ?>
                             <div class="placeholder-image">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
@@ -23,7 +29,7 @@
                                 </svg>
                             </div>
                         <?php endif; ?>
-                        <?php if ($geschenk->ist_reserviert): ?>
+                        <?php if ($geschenkeliste_geschenk->ist_reserviert): ?>
                             <div class="reserved-overlay">
                                 <span class="reserved-badge">Bereits vergeben</span>
                             </div>
@@ -31,27 +37,27 @@
                     </div>
 
                     <div class="geschenk-content">
-                        <h3 class="geschenk-titel"><?php echo esc_html($geschenk->titel); ?></h3>
+                        <h3 class="geschenk-titel"><?php echo esc_html($geschenkeliste_geschenk->titel); ?></h3>
 
-                        <?php if ($geschenk->beschreibung): ?>
-                            <p class="geschenk-beschreibung"><?php echo wp_kses_post($geschenk->beschreibung); ?></p>
+                        <?php if ($geschenkeliste_geschenk->beschreibung): ?>
+                            <p class="geschenk-beschreibung"><?php echo wp_kses_post($geschenkeliste_geschenk->beschreibung); ?></p>
                         <?php endif; ?>
 
-                        <?php if ($geschenk->link): ?>
+                        <?php if ($geschenkeliste_geschenk->link): ?>
                             <p class="geschenk-link">
-                                <a href="<?php echo esc_url($geschenk->link); ?>" target="_blank" rel="noopener noreferrer">
+                                <a href="<?php echo esc_url($geschenkeliste_geschenk->link); ?>" target="_blank" rel="noopener noreferrer">
                                     <span class="dashicons dashicons-admin-links"></span> Zum Shop
                                 </a>
                             </p>
                         <?php endif; ?>
 
                         <div class="geschenk-actions">
-                            <?php if ($geschenk->ist_reserviert): ?>
+                            <?php if ($geschenkeliste_geschenk->ist_reserviert): ?>
                                 <span class="status-info reserved-info">
                                     <span class="dashicons dashicons-yes-alt"></span> Vergeben
                                 </span>
                             <?php else: ?>
-                                <button class="button-reserve" data-id="<?php echo esc_attr($geschenk->id); ?>">
+                                <button class="button-reserve" data-id="<?php echo esc_attr($geschenkeliste_geschenk->id); ?>">
                                     <?php echo esc_html($frontend_texts['reserve_button']); ?>
                                 </button>
                             <?php endif; ?>

@@ -1,3 +1,9 @@
+<?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+?>
+
 <div class="wrap">
     <h1>Frontend-Texte bearbeiten</h1>
 
