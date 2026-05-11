@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Hochzeit Geschenkeliste: Kostenloses WordPress-Plugin für reservierbare Hochzeitsgeschenke mit E-Mail-Bestätigung.">
+  <title>Hochzeit Geschenkeliste - Kostenloses WordPress Plugin</title>
+  <style>
+    :root {
+      --bg: #fffaf4;
+      --text: #2a1f1b;
+      --card: #ffffff;
+      --accent: #b24a3a;
+      --accent-2: #e7a66a;
+      --muted: #6e5b55;
+      --ring: rgba(178, 74, 58, 0.18);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 20%, #ffd8b7 0, transparent 45%),
+        radial-gradient(circle at 80% 15%, #ffe9d1 0, transparent 40%),
+        var(--bg);
+      line-height: 1.6;
+    }
+
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .hero {
+      background: linear-gradient(145deg, #fff 0%, #fff4e8 100%);
+      border: 1px solid #f2d7bd;
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 20px 35px var(--ring);
+      animation: fadeIn 700ms ease;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: clamp(1.7rem, 3.4vw, 2.6rem);
+      line-height: 1.2;
+    }
+
+    h2 { margin-top: 2.4rem; }
+
+    .subtitle {
+      color: var(--muted);
+      max-width: 65ch;
+    }
+
+    .cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      margin-top: 1.25rem;
+    }
+
+    .btn {
+      display: inline-block;
+      text-decoration: none;
+      padding: .75rem 1rem;
+      border-radius: 10px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      transition: transform .15s ease, filter .15s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.03); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      border-color: #ddb79d;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid #f0ddca;
+      border-radius: 14px;
+      padding: 1rem;
+      animation: slideUp 500ms ease both;
+    }
+
+    .note {
+      margin-top: 2rem;
+      background: #fff;
+      border-left: 4px solid var(--accent-2);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    footer {
+      margin-top: 2rem;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Hochzeit Geschenkeliste</h1>
+      <p class="subtitle">Das kostenlose WordPress-Plugin für eure Hochzeits-Geschenkeliste: Geschenke anlegen, im Frontend anzeigen und per E-Mail-verifizierter Reservierung zuverlässig vergeben.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://wordpress.org/plugins/" target="_blank" rel="noopener noreferrer">Zu WordPress.org</a>
+        <a class="btn btn-secondary" href="./docs/VEROEFFENTLICHUNG.md">Veröffentlichungsanleitung</a>
+      </div>
+    </section>
+
+    <section>
+      <h2>Highlights</h2>
+      <div class="grid">
+        <article class="card">
+          <h3>Einfache Verwaltung</h3>
+          <p>Geschenke im WordPress-Backend anlegen, bearbeiten und löschen.</p>
+        </article>
+        <article class="card">
+          <h3>Reservierung mit Bestätigung</h3>
+          <p>Gäste bestätigen Reservierungen per E-Mail-Link, damit nichts doppelt vergeben wird.</p>
+        </article>
+        <article class="card">
+          <h3>Datenschutz integriert</h3>
+          <p>Kompatibel mit den WordPress-Tools zum Export und Löschen personenbezogener Daten.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="note">
+      <strong>Hinweis:</strong> Du kannst das Plugin auch als Privatperson ohne Firma/Gewerbe auf WordPress.org veröffentlichen.
+    </section>
+
+    <footer>
+      <p>Lizenz: GPLv2 oder höher.</p>
+    </footer>
+  </main>
+</body>
+</html>

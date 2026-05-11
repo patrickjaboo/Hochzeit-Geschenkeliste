@@ -1,0 +1,294 @@
+.geschenkeliste-frontend {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.geschenkeliste-frontend h2 {
+    text-align: center;
+    font-size: 2em;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.geschenkeliste-intro {
+    text-align: center;
+    font-size: 1.1em;
+    color: #666;
+    margin-bottom: 40px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.no-geschenke {
+    text-align: center;
+    font-size: 1.1em;
+    color: #999;
+    padding: 40px 20px;
+}
+
+.geschenke-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.geschenk-item {
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.geschenk-item:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.geschenk-item.reserved {
+    opacity: 0.75;
+}
+
+.geschenk-image {
+    position: relative;
+    width: 100%;
+    height: 250px;
+    overflow: hidden;
+    background: #f5f5f5;
+}
+
+.geschenk-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.placeholder-image {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+}
+
+.placeholder-image svg {
+    width: 120px;
+    height: 120px;
+    opacity: 0.6;
+}
+
+.reserved-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reserved-badge {
+    background: #fff;
+    color: #333;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+.geschenk-content {
+    padding: 20px;
+}
+
+.geschenk-titel {
+    font-size: 1.4em;
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.geschenk-beschreibung {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.geschenk-link {
+    margin-bottom: 15px;
+}
+
+.geschenk-link a {
+    color: #0073aa;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.geschenk-link a:hover {
+    text-decoration: underline;
+}
+
+.geschenk-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.button-reserve {
+    background: #0073aa;
+    color: #fff;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.button-reserve:hover {
+    background: #005177;
+}
+
+.status-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 16px;
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+.reserved-info {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Modal Styles */
+.geschenkeliste-modal {
+    display: none;
+    position: fixed;
+    z-index: 100000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.7);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 30px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 8px;
+    position: relative;
+}
+
+.close-modal {
+    color: #aaa;
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+    color: #000;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #0073aa;
+    box-shadow: 0 0 5px rgba(0,115,170,0.2);
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.button-primary {
+    background: #0073aa;
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    flex: 1;
+}
+
+.button-primary:hover {
+    background: #005177;
+}
+
+.button-secondary {
+    background: #f1f1f1;
+    color: #333;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+.button-secondary:hover {
+    background: #e1e1e1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .geschenke-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 5% auto;
+        padding: 20px;
+    }
+}

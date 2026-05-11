@@ -1,0 +1,12 @@
+# OS / Editor
+.DS_Store
+.idea/
+
+# Build / release artifacts
+*.zip
+*.tar.gz
+
+# Optional local tooling
+node_modules/
+vendor/
+

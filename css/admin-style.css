@@ -1,0 +1,131 @@
+.geschenkeliste-admin-container {
+    max-width: 1200px;
+}
+
+.admin-section {
+    background: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.admin-section h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-badge.available {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.reserved {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.image-preview,
+.image-preview-edit {
+    display: none;
+}
+
+.image-preview img,
+.image-preview-edit img {
+    max-width: 200px;
+    height: auto;
+    border: 1px solid #ddd;
+    padding: 5px;
+    background: #fff;
+}
+
+.image-preview .remove-image,
+.image-preview-edit .remove-image {
+    display: inline-block;
+    margin-left: 10px;
+    color: #a00;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.image-preview .remove-image:hover,
+.image-preview-edit .remove-image:hover {
+    color: #dc3232;
+}
+
+/* Modal Styles */
+.geschenkeliste-modal {
+    display: none;
+    position: fixed;
+    z-index: 100000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 30px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 5px;
+    position: relative;
+}
+
+.close-modal {
+    color: #aaa;
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+    color: #000;
+}
+
+#edit-geschenk-modal h2 {
+    margin-top: 0;
+}
+
+.wp-list-table .button-small {
+    margin-right: 5px;
+    padding: 4px 8px;
+    height: auto;
+    line-height: 1.4;
+}
+
+.wp-list-table td {
+    vertical-align: middle;
+}
+
+.cancel-reservation {
+    background: #f0ad4e !important;
+    border-color: #eea236 !important;
+    color: #fff !important;
+}
+
+.cancel-reservation:hover {
+    background: #ec971f !important;
+    border-color: #d58512 !important;
+}

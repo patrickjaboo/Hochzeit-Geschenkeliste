@@ -1,0 +1,16 @@
+# VCS / local config
+.git
+.gitignore
+.distignore
+.idea
+.DS_Store
+
+# Development docs / scratch files not needed at runtime
+docs
+landingpage.html
+assets/source-html
+assets/README-ASSETS.md
+
+# Local build artifacts
+assets-package.zip
+
