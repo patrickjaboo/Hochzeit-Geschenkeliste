@@ -20,6 +20,8 @@ define('HOCHZEIT_GESCHENKELISTE_VERSION', '1.1.0');
 
 class Hochzeit_Geschenkeliste {
 
+    private const CACHE_GROUP = 'hochzeit_geschenkeliste';
+
     private $table_name;
     private $table_reservations;
     private $frontend_text_option_name = 'geschenkeliste_frontend_texts';
@@ -32,7 +34,6 @@ class Hochzeit_Geschenkeliste {
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
 
-        add_action('init', array($this, 'load_textdomain'));
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_init', array($this, 'register_privacy_policy_content'));
         add_action('admin_init', array($this, 'register_frontend_text_settings'));
@@ -90,17 +91,19 @@ class Hochzeit_Geschenkeliste {
         dbDelta($sql_geschenke);
         dbDelta($sql_reservierungen);
 
-        // Prüfen und hinzufügen fehlender Spalten für bestehende Installationen
-        $columns = $wpdb->get_col("DESC {$this->table_reservations}", 0);
+        // Prüfen und hinzufügen fehlender Spalten für bestehende Installationen.
+        $columns = $this->get_reservation_columns(true);
 
         if (!in_array('verification_token', $columns)) {
-            $wpdb->query("ALTER TABLE {$this->table_reservations} ADD COLUMN verification_token varchar(64) AFTER name");
-            $wpdb->query("ALTER TABLE {$this->table_reservations} ADD INDEX (verification_token)");
+            $this->db_query('ALTER TABLE ' . esc_sql($this->table_reservations) . ' ADD COLUMN verification_token varchar(64) AFTER name');
+            $this->db_query('ALTER TABLE ' . esc_sql($this->table_reservations) . ' ADD INDEX (verification_token)');
         }
 
         if (!in_array('is_verified', $columns)) {
-            $wpdb->query("ALTER TABLE {$this->table_reservations} ADD COLUMN is_verified tinyint(1) DEFAULT 0 AFTER verification_token");
+            $this->db_query('ALTER TABLE ' . esc_sql($this->table_reservations) . ' ADD COLUMN is_verified tinyint(1) DEFAULT 0 AFTER verification_token');
         }
+
+        $this->clear_cache();
 
         if (!wp_next_scheduled('geschenkeliste_cleanup')) {
             wp_schedule_event(time(), 'hourly', 'geschenkeliste_cleanup');
@@ -115,8 +118,105 @@ class Hochzeit_Geschenkeliste {
         }
     }
 
-    public function load_textdomain() {
-        load_plugin_textdomain('hochzeit-geschenkeliste', false, dirname(plugin_basename(__FILE__)) . '/languages');
+    private function db_prepare($query, ...$args) {
+        global $wpdb;
+
+        if (empty($args)) {
+            return $query;
+        }
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Custom table identifiers are sanitized before queries reach this wrapper.
+        return $wpdb->prepare($query, $args);
+    }
+
+    private function db_get_results($query, $output = OBJECT) {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- This plugin stores its own custom table data; callers pass prepared queries and cache reusable reads.
+        return $wpdb->get_results($query, $output);
+    }
+
+    private function db_get_row($query, $output = OBJECT) {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- This plugin stores its own custom table data; callers pass prepared queries and cache reusable reads.
+        return $wpdb->get_row($query, $output);
+    }
+
+    private function db_get_col($query, $column_offset = 0) {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- This plugin stores its own custom table data; callers pass prepared queries and cache reusable reads.
+        return $wpdb->get_col($query, $column_offset);
+    }
+
+    private function db_get_var($query) {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- This plugin stores its own custom table data; callers pass prepared queries and cache reusable reads.
+        return $wpdb->get_var($query);
+    }
+
+    private function db_query($query) {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom table schema and cleanup are managed by this plugin.
+        return $wpdb->query($query);
+    }
+
+    private function db_insert($table, $data, $format = null) {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- This plugin stores its own custom table data.
+        return $wpdb->insert($table, $data, $format);
+    }
+
+    private function db_update($table, $data, $where, $format = null, $where_format = null) {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- This plugin stores its own custom table data.
+        return $wpdb->update($table, $data, $where, $format, $where_format);
+    }
+
+    private function db_delete($table, $where, $where_format = null) {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- This plugin stores its own custom table data.
+        return $wpdb->delete($table, $where, $where_format);
+    }
+
+    private function get_reservation_columns($force_refresh = false) {
+        $cache_key = 'reservation_columns';
+        $columns = false;
+
+        if (!$force_refresh) {
+            $columns = wp_cache_get($cache_key, self::CACHE_GROUP);
+        }
+
+        if (false === $columns) {
+            $columns = $this->db_get_col('DESC ' . esc_sql($this->table_reservations), 0);
+            wp_cache_set($cache_key, $columns, self::CACHE_GROUP);
+        }
+
+        return $columns;
+    }
+
+    private function clear_cache() {
+        wp_cache_delete('reservation_columns', self::CACHE_GROUP);
+        wp_cache_delete('admin_gifts_verified', self::CACHE_GROUP);
+        wp_cache_delete('admin_gifts_legacy', self::CACHE_GROUP);
+        wp_cache_delete('frontend_gifts_verified', self::CACHE_GROUP);
+        wp_cache_delete('frontend_gifts_legacy', self::CACHE_GROUP);
+    }
+
+    private function get_query_arg($key) {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public email links are authenticated with a single-use random token instead of a nonce.
+        if (!isset($_GET[$key])) {
+            return null;
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public email links are authenticated with a single-use random token instead of a nonce.
+        return sanitize_text_field(wp_unslash($_GET[$key]));
     }
 
     public function register_privacy_policy_content() {
@@ -152,18 +252,18 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function personal_data_exporter($email_address, $page = 1) {
-        global $wpdb;
-
         $email = sanitize_email($email_address);
         $page = (int) $page;
         $number = 100;
         $offset = ($page - 1) * $number;
+        $reservations_table = esc_sql($this->table_reservations);
+        $gifts_table = esc_sql($this->table_name);
 
-        $results = $wpdb->get_results(
-            $wpdb->prepare(
+        $results = $this->db_get_results(
+            $this->db_prepare(
                 "SELECT r.id, r.email, r.name, r.reserviert_am, r.is_verified, g.titel
-                FROM {$this->table_reservations} r
-                LEFT JOIN {$this->table_name} g ON r.geschenk_id = g.id
+                FROM {$reservations_table} r
+                LEFT JOIN {$gifts_table} g ON r.geschenk_id = g.id
                 WHERE r.email = %s
                 ORDER BY r.id ASC
                 LIMIT %d OFFSET %d",
@@ -211,16 +311,15 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function personal_data_eraser($email_address, $page = 1) {
-        global $wpdb;
-
         $email = sanitize_email($email_address);
         $page = (int) $page;
         $number = 100;
         $offset = ($page - 1) * $number;
+        $reservations_table = esc_sql($this->table_reservations);
 
-        $ids = $wpdb->get_col(
-            $wpdb->prepare(
-                "SELECT id FROM {$this->table_reservations}
+        $ids = $this->db_get_col(
+            $this->db_prepare(
+                "SELECT id FROM {$reservations_table}
                 WHERE email = %s
                 ORDER BY id ASC
                 LIMIT %d OFFSET %d",
@@ -232,7 +331,7 @@ class Hochzeit_Geschenkeliste {
 
         $items_removed = false;
         foreach ($ids as $id) {
-            $deleted = $wpdb->delete(
+            $deleted = $this->db_delete(
                 $this->table_reservations,
                 array('id' => (int) $id),
                 array('%d')
@@ -240,6 +339,7 @@ class Hochzeit_Geschenkeliste {
 
             if ($deleted) {
                 $items_removed = true;
+                $this->clear_cache();
             }
         }
 
@@ -386,37 +486,41 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function render_admin_page() {
-        global $wpdb;
-
         // Prüfen ob is_verified Spalte existiert
-        $columns = $wpdb->get_col("DESC {$this->table_reservations}", 0);
+        $columns = $this->get_reservation_columns();
         $has_verification = in_array('is_verified', $columns);
+        $cache_key = $has_verification ? 'admin_gifts_verified' : 'admin_gifts_legacy';
+        $geschenke = wp_cache_get($cache_key, self::CACHE_GROUP);
+        $gifts_table = esc_sql($this->table_name);
+        $reservations_table = esc_sql($this->table_reservations);
 
-        if ($has_verification) {
-            $geschenke = $wpdb->get_results("
+        if (false === $geschenke && $has_verification) {
+            $geschenke = $this->db_get_results("
                 SELECT g.*,
                        r.email,
                        r.name,
                        r.reserviert_am,
                        r.is_verified,
                        CASE WHEN r.id IS NOT NULL AND r.is_verified = 1 THEN 1 ELSE 0 END as ist_reserviert
-                FROM {$this->table_name} g
-                LEFT JOIN {$this->table_reservations} r ON g.id = r.geschenk_id AND r.is_verified = 1
+                FROM {$gifts_table} g
+                LEFT JOIN {$reservations_table} r ON g.id = r.geschenk_id AND r.is_verified = 1
                 ORDER BY g.erstellt_am DESC
             ");
-        } else {
+            wp_cache_set($cache_key, $geschenke, self::CACHE_GROUP);
+        } elseif (false === $geschenke) {
             // Fallback für alte Installationen ohne Verifizierung
-            $geschenke = $wpdb->get_results("
+            $geschenke = $this->db_get_results("
                 SELECT g.*,
                        r.email,
                        r.name,
                        r.reserviert_am,
                        0 as is_verified,
                        CASE WHEN r.id IS NOT NULL THEN 1 ELSE 0 END as ist_reserviert
-                FROM {$this->table_name} g
-                LEFT JOIN {$this->table_reservations} r ON g.id = r.geschenk_id
+                FROM {$gifts_table} g
+                LEFT JOIN {$reservations_table} r ON g.id = r.geschenk_id
                 ORDER BY g.erstellt_am DESC
             ");
+            wp_cache_set($cache_key, $geschenke, self::CACHE_GROUP);
         }
 
         include plugin_dir_path(__FILE__) . 'templates/admin-page.php';
@@ -432,29 +536,33 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function render_frontend() {
-        global $wpdb;
-
         // Prüfen ob is_verified Spalte existiert
-        $columns = $wpdb->get_col("DESC {$this->table_reservations}", 0);
+        $columns = $this->get_reservation_columns();
         $has_verification = in_array('is_verified', $columns);
+        $cache_key = $has_verification ? 'frontend_gifts_verified' : 'frontend_gifts_legacy';
+        $geschenke = wp_cache_get($cache_key, self::CACHE_GROUP);
+        $gifts_table = esc_sql($this->table_name);
+        $reservations_table = esc_sql($this->table_reservations);
 
-        if ($has_verification) {
-            $geschenke = $wpdb->get_results("
+        if (false === $geschenke && $has_verification) {
+            $geschenke = $this->db_get_results("
                 SELECT g.*,
                        CASE WHEN r.id IS NOT NULL AND r.is_verified = 1 THEN 1 ELSE 0 END as ist_reserviert
-                FROM {$this->table_name} g
-                LEFT JOIN {$this->table_reservations} r ON g.id = r.geschenk_id AND r.is_verified = 1
+                FROM {$gifts_table} g
+                LEFT JOIN {$reservations_table} r ON g.id = r.geschenk_id AND r.is_verified = 1
                 ORDER BY g.erstellt_am ASC
             ");
-        } else {
+            wp_cache_set($cache_key, $geschenke, self::CACHE_GROUP);
+        } elseif (false === $geschenke) {
             // Fallback für alte Installationen ohne Verifizierung
-            $geschenke = $wpdb->get_results("
+            $geschenke = $this->db_get_results("
                 SELECT g.*,
                        CASE WHEN r.id IS NOT NULL THEN 1 ELSE 0 END as ist_reserviert
-                FROM {$this->table_name} g
-                LEFT JOIN {$this->table_reservations} r ON g.id = r.geschenk_id
+                FROM {$gifts_table} g
+                LEFT JOIN {$reservations_table} r ON g.id = r.geschenk_id
                 ORDER BY g.erstellt_am ASC
             ");
+            wp_cache_set($cache_key, $geschenke, self::CACHE_GROUP);
         }
 
         $frontend_texts = $this->get_frontend_texts();
@@ -467,11 +575,11 @@ class Hochzeit_Geschenkeliste {
     public function ajax_reserve_geschenk() {
         check_ajax_referer('geschenkeliste_frontend_nonce', 'nonce');
 
-        global $wpdb;
-
         $geschenk_id = isset($_POST['geschenk_id']) ? intval(wp_unslash($_POST['geschenk_id'])) : 0;
         $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
         $name = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';
+        $reservations_table = esc_sql($this->table_reservations);
+        $gifts_table = esc_sql($this->table_name);
 
         if ($geschenk_id <= 0) {
             wp_send_json_error(array('message' => 'Ungültiges Geschenk.'));
@@ -481,8 +589,8 @@ class Hochzeit_Geschenkeliste {
             wp_send_json_error(array('message' => 'Bitte geben Sie eine gültige E-Mail-Adresse ein.'));
         }
 
-        $already_reserved = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM {$this->table_reservations} WHERE geschenk_id = %d AND is_verified = 1",
+        $already_reserved = $this->db_get_var($this->db_prepare(
+            "SELECT id FROM {$reservations_table} WHERE geschenk_id = %d AND is_verified = 1",
             $geschenk_id
         ));
 
@@ -493,7 +601,7 @@ class Hochzeit_Geschenkeliste {
         // Token generieren
         $verification_token = bin2hex(random_bytes(32));
 
-        $result = $wpdb->insert(
+        $result = $this->db_insert(
             $this->table_reservations,
             array(
                 'geschenk_id' => $geschenk_id,
@@ -507,9 +615,11 @@ class Hochzeit_Geschenkeliste {
         );
 
         if ($result) {
+            $this->clear_cache();
+
             // Geschenk-Daten holen
-            $geschenk = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$this->table_name} WHERE id = %d",
+            $geschenk = $this->db_get_row($this->db_prepare(
+                "SELECT * FROM {$gifts_table} WHERE id = %d",
                 $geschenk_id
             ));
 
@@ -529,9 +639,7 @@ class Hochzeit_Geschenkeliste {
             wp_send_json_error(array('message' => 'Keine Berechtigung.'));
         }
 
-        global $wpdb;
-
-        $result = $wpdb->insert(
+        $result = $this->db_insert(
             $this->table_name,
             array(
                 'titel' => isset($_POST['titel']) ? sanitize_text_field(wp_unslash($_POST['titel'])) : '',
@@ -544,6 +652,7 @@ class Hochzeit_Geschenkeliste {
         );
 
         if ($result) {
+            $this->clear_cache();
             wp_send_json_success(array('message' => 'Geschenk erfolgreich hinzugefügt!'));
         } else {
             wp_send_json_error(array('message' => 'Fehler beim Hinzufügen.'));
@@ -557,9 +666,7 @@ class Hochzeit_Geschenkeliste {
             wp_send_json_error(array('message' => 'Keine Berechtigung.'));
         }
 
-        global $wpdb;
-
-        $result = $wpdb->update(
+        $result = $this->db_update(
             $this->table_name,
             array(
                 'titel' => isset($_POST['titel']) ? sanitize_text_field(wp_unslash($_POST['titel'])) : '',
@@ -573,6 +680,7 @@ class Hochzeit_Geschenkeliste {
         );
 
         if ($result !== false) {
+            $this->clear_cache();
             wp_send_json_success(array('message' => 'Geschenk erfolgreich aktualisiert!'));
         } else {
             wp_send_json_error(array('message' => 'Fehler beim Aktualisieren.'));
@@ -586,14 +694,13 @@ class Hochzeit_Geschenkeliste {
             wp_send_json_error(array('message' => 'Keine Berechtigung.'));
         }
 
-        global $wpdb;
-
         $geschenk_id = isset($_POST['id']) ? intval(wp_unslash($_POST['id'])) : 0;
 
-        $wpdb->delete($this->table_reservations, array('geschenk_id' => $geschenk_id), array('%d'));
-        $result = $wpdb->delete($this->table_name, array('id' => $geschenk_id), array('%d'));
+        $this->db_delete($this->table_reservations, array('geschenk_id' => $geschenk_id), array('%d'));
+        $result = $this->db_delete($this->table_name, array('id' => $geschenk_id), array('%d'));
 
         if ($result) {
+            $this->clear_cache();
             wp_send_json_success(array('message' => 'Geschenk erfolgreich gelöscht!'));
         } else {
             wp_send_json_error(array('message' => 'Fehler beim Löschen.'));
@@ -607,21 +714,20 @@ class Hochzeit_Geschenkeliste {
             wp_send_json_error(array('message' => 'Keine Berechtigung.'));
         }
 
-        global $wpdb;
-
         $geschenk_id = isset($_POST['geschenk_id']) ? intval(wp_unslash($_POST['geschenk_id'])) : 0;
 
         if ($geschenk_id <= 0) {
             wp_send_json_error(array('message' => 'Ungültiges Geschenk.'));
         }
 
-        $result = $wpdb->delete(
+        $result = $this->db_delete(
             $this->table_reservations,
             array('geschenk_id' => $geschenk_id),
             array('%d')
         );
 
         if ($result) {
+            $this->clear_cache();
             wp_send_json_success(array('message' => 'Reservierung erfolgreich aufgehoben!'));
         } else {
             wp_send_json_error(array('message' => 'Fehler beim Aufheben der Reservierung.'));
@@ -635,17 +741,17 @@ class Hochzeit_Geschenkeliste {
             wp_send_json_error(array('message' => 'Keine Berechtigung.'));
         }
 
-        global $wpdb;
         $geschenk_id = isset($_POST['id']) ? intval(wp_unslash($_POST['id'])) : 0;
+        $gifts_table = esc_sql($this->table_name);
 
         if ($geschenk_id <= 0) {
             wp_send_json_error(array('message' => 'Ungültiges Geschenk.'));
         }
 
-        $geschenk = $wpdb->get_row(
-            $wpdb->prepare(
+        $geschenk = $this->db_get_row(
+            $this->db_prepare(
                 "SELECT id, titel, beschreibung, link, bild_url
-                FROM {$this->table_name}
+                FROM {$gifts_table}
                 WHERE id = %d",
                 $geschenk_id
             ),
@@ -735,19 +841,22 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function handle_verification() {
-        if (!isset($_GET['action']) || $_GET['action'] !== 'verify_reservation') {
+        $action = $this->get_query_arg('action');
+
+        if ('verify_reservation' !== $action) {
             return;
         }
 
-        if (!isset($_GET['token'])) {
+        $token = $this->get_query_arg('token');
+
+        if (empty($token)) {
             wp_die('Ungültiger Verifizierungslink.');
         }
 
-        global $wpdb;
-        $token = sanitize_text_field(wp_unslash($_GET['token']));
+        $reservations_table = esc_sql($this->table_reservations);
 
-        $reservation = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$this->table_reservations} WHERE verification_token = %s",
+        $reservation = $this->db_get_row($this->db_prepare(
+            "SELECT * FROM {$reservations_table} WHERE verification_token = %s",
             $token
         ));
 
@@ -760,8 +869,8 @@ class Hochzeit_Geschenkeliste {
         }
 
         // Prüfen ob das Geschenk inzwischen von jemand anderem reserviert wurde
-        $already_verified = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM {$this->table_reservations}
+        $already_verified = $this->db_get_var($this->db_prepare(
+            "SELECT id FROM {$reservations_table}
              WHERE geschenk_id = %d AND is_verified = 1 AND id != %d",
             $reservation->geschenk_id,
             $reservation->id
@@ -772,7 +881,7 @@ class Hochzeit_Geschenkeliste {
         }
 
         // Verifizierung durchführen
-        $wpdb->update(
+        $this->db_update(
             $this->table_reservations,
             array('is_verified' => 1),
             array('id' => $reservation->id),
@@ -781,7 +890,7 @@ class Hochzeit_Geschenkeliste {
         );
 
         // Alte, nicht verifizierte Reservierungen für dieses Geschenk löschen
-        $wpdb->delete(
+        $this->db_delete(
             $this->table_reservations,
             array(
                 'geschenk_id' => $reservation->geschenk_id,
@@ -789,6 +898,8 @@ class Hochzeit_Geschenkeliste {
             ),
             array('%d', '%d')
         );
+
+        $this->clear_cache();
 
         wp_die('
             <h1>✓ Reservierung bestätigt!</h1>
@@ -798,19 +909,22 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function handle_cancellation() {
-        if (!isset($_GET['action']) || $_GET['action'] !== 'cancel_reservation_guest') {
+        $action = $this->get_query_arg('action');
+
+        if ('cancel_reservation_guest' !== $action) {
             return;
         }
 
-        if (!isset($_GET['token'])) {
+        $token = $this->get_query_arg('token');
+
+        if (empty($token)) {
             wp_die('Ungültiger Stornierungslink.');
         }
 
-        global $wpdb;
-        $token = sanitize_text_field(wp_unslash($_GET['token']));
+        $reservations_table = esc_sql($this->table_reservations);
 
-        $reservation = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$this->table_reservations} WHERE verification_token = %s",
+        $reservation = $this->db_get_row($this->db_prepare(
+            "SELECT * FROM {$reservations_table} WHERE verification_token = %s",
             $token
         ));
 
@@ -819,11 +933,13 @@ class Hochzeit_Geschenkeliste {
         }
 
         // Reservierung löschen
-        $wpdb->delete(
+        $this->db_delete(
             $this->table_reservations,
             array('id' => $reservation->id),
             array('%d')
         );
+
+        $this->clear_cache();
 
         wp_die('
             <h1>✓ Reservierung storniert</h1>
@@ -833,14 +949,14 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function cleanup_old_reservations() {
-        global $wpdb;
-
         // Lösche unbestätigte Reservierungen, die älter als 24 Stunden sind
-        $wpdb->query("
-            DELETE FROM {$this->table_reservations}
+        $this->db_query("
+            DELETE FROM " . esc_sql($this->table_reservations) . "
             WHERE is_verified = 0
             AND reserviert_am < DATE_SUB(NOW(), INTERVAL 24 HOUR)
         ");
+
+        $this->clear_cache();
     }
 }
 

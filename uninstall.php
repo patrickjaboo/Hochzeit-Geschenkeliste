@@ -10,17 +10,19 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     exit;
 }
 
-$timestamp = wp_next_scheduled('geschenkeliste_cleanup');
-if ($timestamp) {
-    wp_unschedule_event($timestamp, 'geschenkeliste_cleanup');
+$hochzeit_geschenkeliste_timestamp = wp_next_scheduled('geschenkeliste_cleanup');
+if ($hochzeit_geschenkeliste_timestamp) {
+    wp_unschedule_event($hochzeit_geschenkeliste_timestamp, 'geschenkeliste_cleanup');
 }
 
 if (defined('HOCHZEIT_GESCHENKELISTE_DELETE_DATA_ON_UNINSTALL') && HOCHZEIT_GESCHENKELISTE_DELETE_DATA_ON_UNINSTALL) {
     global $wpdb;
 
-    $table_name = $wpdb->prefix . 'geschenkeliste';
-    $table_reservations = $wpdb->prefix . 'geschenkeliste_reservierungen';
+    $hochzeit_geschenkeliste_table_name = esc_sql($wpdb->prefix . 'geschenkeliste');
+    $hochzeit_geschenkeliste_table_reservations = esc_sql($wpdb->prefix . 'geschenkeliste_reservierungen');
 
-    $wpdb->query("DROP TABLE IF EXISTS {$table_reservations}");
-    $wpdb->query("DROP TABLE IF EXISTS {$table_name}");
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Optional uninstall cleanup for this plugin's own custom table.
+    $wpdb->query('DROP TABLE IF EXISTS ' . $hochzeit_geschenkeliste_table_reservations);
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Optional uninstall cleanup for this plugin's own custom table.
+    $wpdb->query('DROP TABLE IF EXISTS ' . $hochzeit_geschenkeliste_table_name);
 }
