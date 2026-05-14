@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
             <p>Hier kannst du die zentralen Texte für die Frontend-Ausgabe anpassen.</p>
 
             <form method="post" action="options.php">
-                <?php settings_fields('geschenkeliste_frontend_texts_group'); ?>
+                <?php settings_fields('hochzeit_geschenkeliste_frontend_texts_group'); ?>
 
                 <table class="form-table">
                     <tr>
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="text"
                                 id="geschenkeliste_title"
-                                name="geschenkeliste_frontend_texts[title]"
+                                name="hochzeit_geschenkeliste_frontend_texts[title]"
                                 value="<?php echo esc_attr($frontend_texts['title']); ?>"
                                 class="regular-text"
                             >
@@ -37,7 +37,7 @@ if (!defined('ABSPATH')) {
                         <td>
                             <textarea
                                 id="geschenkeliste_intro"
-                                name="geschenkeliste_frontend_texts[intro]"
+                                name="hochzeit_geschenkeliste_frontend_texts[intro]"
                                 rows="4"
                                 class="large-text"
                             ><?php echo esc_textarea($frontend_texts['intro']); ?></textarea>
@@ -51,7 +51,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="text"
                                 id="geschenkeliste_empty"
-                                name="geschenkeliste_frontend_texts[empty]"
+                                name="hochzeit_geschenkeliste_frontend_texts[empty]"
                                 value="<?php echo esc_attr($frontend_texts['empty']); ?>"
                                 class="regular-text"
                             >
@@ -65,7 +65,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="text"
                                 id="geschenkeliste_reserve_button"
-                                name="geschenkeliste_frontend_texts[reserve_button]"
+                                name="hochzeit_geschenkeliste_frontend_texts[reserve_button]"
                                 value="<?php echo esc_attr($frontend_texts['reserve_button']); ?>"
                                 class="regular-text"
                             >
@@ -79,7 +79,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="text"
                                 id="geschenkeliste_modal_title"
-                                name="geschenkeliste_frontend_texts[modal_title]"
+                                name="hochzeit_geschenkeliste_frontend_texts[modal_title]"
                                 value="<?php echo esc_attr($frontend_texts['modal_title']); ?>"
                                 class="regular-text"
                             >
@@ -92,7 +92,7 @@ if (!defined('ABSPATH')) {
                         <td>
                             <textarea
                                 id="geschenkeliste_modal_intro"
-                                name="geschenkeliste_frontend_texts[modal_intro]"
+                                name="hochzeit_geschenkeliste_frontend_texts[modal_intro]"
                                 rows="3"
                                 class="large-text"
                             ><?php echo esc_textarea($frontend_texts['modal_intro']); ?></textarea>

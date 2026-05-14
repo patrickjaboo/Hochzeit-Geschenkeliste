@@ -1,5 +1,5 @@
 === Hochzeit Geschenkeliste ===
-Contributors: patrickjanssen
+Contributors: patrickjaboo
 Tags: wedding, wishlist, gifts, reservation, shortcode
 Requires at least: 6.0
 Tested up to: 6.9
@@ -16,7 +16,7 @@ Hochzeit Geschenkeliste lets you display a wedding gift list on a WordPress page
 
 Features:
 
-* Frontend-Shortcode `[geschenkeliste]`
+* Frontend shortcode `[hochzeit_geschenkeliste]`
 * Manage gifts in the WordPress admin
 * Reservation workflow with email confirmation
 * Guest self-cancellation via email link
@@ -26,7 +26,7 @@ Features:
 
 1. Upload the plugin folder `hochzeit-geschenkeliste` to `/wp-content/plugins/`.
 2. Activate the plugin in WordPress under "Plugins".
-3. Create a page and add the shortcode `[geschenkeliste]`.
+3. Create a page and add the shortcode `[hochzeit_geschenkeliste]`.
 
 == Frequently Asked Questions ==
 
@@ -51,7 +51,7 @@ Yes. The plugin integrates with the WordPress privacy tools for personal data ex
 * Added WordPress.org-compatible `readme.txt`
 * Added privacy integration for personal data export/erasure
 * Added `uninstall.php`
-* Implemented missing AJAX endpoint `get_geschenk`
+* Implemented missing AJAX endpoint
 * Hardened input sanitization
 
 = 1.0.0 =

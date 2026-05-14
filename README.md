@@ -43,7 +43,7 @@ Ein einfaches WordPress-Plugin zur Verwaltung einer Hochzeits-Geschenkeliste.
 
 4. **Frontend einbinden**
    - Erstelle eine neue Seite (z.B. "Geschenkeliste")
-   - Füge den Shortcode `[geschenkeliste]` in den Seiteninhalt ein
+   - Füge den Shortcode `[hochzeit_geschenkeliste]` in den Seiteninhalt ein
    - Veröffentliche die Seite
    - Die Geschenkeliste wird nun auf dieser Seite angezeigt
 
@@ -109,7 +109,7 @@ Das Plugin verwendet ein Zwei-Schritt-Verifizierungssystem:
 ## Shortcode
 
 ```
-[geschenkeliste]
+[hochzeit_geschenkeliste]
 ```
 
 Dieser Shortcode zeigt die komplette Geschenkeliste im Frontend an.

@@ -16,14 +16,14 @@ jQuery(document).ready(function($) {
         submitButton.prop('disabled', true).text('Wird reserviert...');
 
         const formData = {
-            action: 'reserve_geschenk',
-            nonce: geschenkeliste.nonce,
+            action: 'hochzeit_geschenkeliste_reserve_geschenk',
+            nonce: hochzeitGeschenkeliste.nonce,
             geschenk_id: $('#reserve_geschenk_id').val(),
             email: $('#reserve_email').val(),
             name: $('#reserve_name').val()
         };
 
-        $.post(geschenkeliste.ajax_url, formData, function(response) {
+        $.post(hochzeitGeschenkeliste.ajax_url, formData, function(response) {
             if (response.success) {
                 alert(response.data.message);
                 location.reload();

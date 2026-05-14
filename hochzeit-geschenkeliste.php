@@ -21,15 +21,16 @@ define('HOCHZEIT_GESCHENKELISTE_VERSION', '1.1.0');
 class Hochzeit_Geschenkeliste {
 
     private const CACHE_GROUP = 'hochzeit_geschenkeliste';
+    private const CLEANUP_HOOK = 'hochzeit_geschenkeliste_cleanup';
 
     private $table_name;
     private $table_reservations;
-    private $frontend_text_option_name = 'geschenkeliste_frontend_texts';
+    private $frontend_text_option_name = 'hochzeit_geschenkeliste_frontend_texts';
 
     public function __construct() {
         global $wpdb;
-        $this->table_name = $wpdb->prefix . 'geschenkeliste';
-        $this->table_reservations = $wpdb->prefix . 'geschenkeliste_reservierungen';
+        $this->table_name = $wpdb->prefix . 'hochzeit_geschenkeliste';
+        $this->table_reservations = $wpdb->prefix . 'hochzeit_geschenkeliste_reservierungen';
 
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
@@ -39,21 +40,21 @@ class Hochzeit_Geschenkeliste {
         add_action('admin_init', array($this, 'register_frontend_text_settings'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
-        add_shortcode('geschenkeliste', array($this, 'render_frontend'));
+        add_shortcode('hochzeit_geschenkeliste', array($this, 'render_frontend'));
 
-        add_action('wp_ajax_reserve_geschenk', array($this, 'ajax_reserve_geschenk'));
-        add_action('wp_ajax_nopriv_reserve_geschenk', array($this, 'ajax_reserve_geschenk'));
+        add_action('wp_ajax_hochzeit_geschenkeliste_reserve_geschenk', array($this, 'ajax_reserve_geschenk'));
+        add_action('wp_ajax_nopriv_hochzeit_geschenkeliste_reserve_geschenk', array($this, 'ajax_reserve_geschenk'));
 
-        add_action('wp_ajax_add_geschenk', array($this, 'ajax_add_geschenk'));
-        add_action('wp_ajax_get_geschenk', array($this, 'ajax_get_geschenk'));
-        add_action('wp_ajax_update_geschenk', array($this, 'ajax_update_geschenk'));
-        add_action('wp_ajax_delete_geschenk', array($this, 'ajax_delete_geschenk'));
-        add_action('wp_ajax_cancel_reservation', array($this, 'ajax_cancel_reservation'));
+        add_action('wp_ajax_hochzeit_geschenkeliste_add_geschenk', array($this, 'ajax_add_geschenk'));
+        add_action('wp_ajax_hochzeit_geschenkeliste_get_geschenk', array($this, 'ajax_get_geschenk'));
+        add_action('wp_ajax_hochzeit_geschenkeliste_update_geschenk', array($this, 'ajax_update_geschenk'));
+        add_action('wp_ajax_hochzeit_geschenkeliste_delete_geschenk', array($this, 'ajax_delete_geschenk'));
+        add_action('wp_ajax_hochzeit_geschenkeliste_cancel_reservation', array($this, 'ajax_cancel_reservation'));
 
         add_action('template_redirect', array($this, 'handle_verification'));
         add_action('template_redirect', array($this, 'handle_cancellation'));
 
-        add_action('geschenkeliste_cleanup', array($this, 'cleanup_old_reservations'));
+        add_action(self::CLEANUP_HOOK, array($this, 'cleanup_old_reservations'));
 
         add_filter('wp_privacy_personal_data_exporters', array($this, 'register_personal_data_exporter'));
         add_filter('wp_privacy_personal_data_erasers', array($this, 'register_personal_data_eraser'));
@@ -105,17 +106,22 @@ class Hochzeit_Geschenkeliste {
 
         $this->clear_cache();
 
-        if (!wp_next_scheduled('geschenkeliste_cleanup')) {
-            wp_schedule_event(time(), 'hourly', 'geschenkeliste_cleanup');
+        $this->migrate_legacy_options();
+        $this->unschedule_legacy_cleanup_hook();
+
+        if (!wp_next_scheduled(self::CLEANUP_HOOK)) {
+            wp_schedule_event(time(), 'hourly', self::CLEANUP_HOOK);
         }
     }
 
     public function deactivate() {
         // Cronjob entfernen
-        $timestamp = wp_next_scheduled('geschenkeliste_cleanup');
+        $timestamp = wp_next_scheduled(self::CLEANUP_HOOK);
         if ($timestamp) {
-            wp_unschedule_event($timestamp, 'geschenkeliste_cleanup');
+            wp_unschedule_event($timestamp, self::CLEANUP_HOOK);
         }
+
+        $this->unschedule_legacy_cleanup_hook();
     }
 
     private function db_prepare($query, ...$args) {
@@ -217,6 +223,24 @@ class Hochzeit_Geschenkeliste {
 
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public email links are authenticated with a single-use random token instead of a nonce.
         return sanitize_text_field(wp_unslash($_GET[$key]));
+    }
+
+    private function migrate_legacy_options() {
+        $legacy_option_name = 'geschenkeliste_frontend_texts';
+        $legacy_value = get_option($legacy_option_name, null);
+
+        if (null !== $legacy_value && false === get_option($this->frontend_text_option_name, false)) {
+            update_option($this->frontend_text_option_name, $legacy_value);
+            delete_option($legacy_option_name);
+        }
+    }
+
+    private function unschedule_legacy_cleanup_hook() {
+        $legacy_timestamp = wp_next_scheduled('geschenkeliste_cleanup');
+
+        if ($legacy_timestamp) {
+            wp_unschedule_event($legacy_timestamp, 'geschenkeliste_cleanup');
+        }
     }
 
     public function register_privacy_policy_content() {
@@ -396,7 +420,7 @@ class Hochzeit_Geschenkeliste {
         }
 
         wp_enqueue_style(
-            'geschenkeliste-admin-css',
+            'hochzeit-geschenkeliste-admin-css',
             plugin_dir_url(__FILE__) . 'css/admin-style.css',
             array(),
             HOCHZEIT_GESCHENKELISTE_VERSION
@@ -405,22 +429,22 @@ class Hochzeit_Geschenkeliste {
         if ($hook === 'toplevel_page_hochzeit-geschenkeliste') {
             wp_enqueue_media();
             wp_enqueue_script(
-                'geschenkeliste-admin-js',
+                'hochzeit-geschenkeliste-admin-js',
                 plugin_dir_url(__FILE__) . 'js/admin-script.js',
                 array('jquery'),
                 HOCHZEIT_GESCHENKELISTE_VERSION,
                 true
             );
-            wp_localize_script('geschenkeliste-admin-js', 'geschenkelisteAdmin', array(
+            wp_localize_script('hochzeit-geschenkeliste-admin-js', 'hochzeitGeschenkelisteAdmin', array(
                 'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('geschenkeliste_admin_nonce')
+                'nonce' => wp_create_nonce('hochzeit_geschenkeliste_admin_nonce')
             ));
         }
     }
 
     public function register_frontend_text_settings() {
         register_setting(
-            'geschenkeliste_frontend_texts_group',
+            'hochzeit_geschenkeliste_frontend_texts_group',
             $this->frontend_text_option_name,
             array($this, 'sanitize_frontend_text_settings')
         );
@@ -464,23 +488,23 @@ class Hochzeit_Geschenkeliste {
 
     public function enqueue_frontend_scripts() {
         global $post;
-        if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'geschenkeliste')) {
+        if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'hochzeit_geschenkeliste')) {
             wp_enqueue_style(
-                'geschenkeliste-frontend-css',
+                'hochzeit-geschenkeliste-frontend-css',
                 plugin_dir_url(__FILE__) . 'css/frontend-style.css',
                 array(),
                 HOCHZEIT_GESCHENKELISTE_VERSION
             );
             wp_enqueue_script(
-                'geschenkeliste-frontend-js',
+                'hochzeit-geschenkeliste-frontend-js',
                 plugin_dir_url(__FILE__) . 'js/frontend-script.js',
                 array('jquery'),
                 HOCHZEIT_GESCHENKELISTE_VERSION,
                 true
             );
-            wp_localize_script('geschenkeliste-frontend-js', 'geschenkeliste', array(
+            wp_localize_script('hochzeit-geschenkeliste-frontend-js', 'hochzeitGeschenkeliste', array(
                 'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('geschenkeliste_frontend_nonce')
+                'nonce' => wp_create_nonce('hochzeit_geschenkeliste_frontend_nonce')
             ));
         }
     }
@@ -573,7 +597,7 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function ajax_reserve_geschenk() {
-        check_ajax_referer('geschenkeliste_frontend_nonce', 'nonce');
+        check_ajax_referer('hochzeit_geschenkeliste_frontend_nonce', 'nonce');
 
         $geschenk_id = isset($_POST['geschenk_id']) ? intval(wp_unslash($_POST['geschenk_id'])) : 0;
         $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
@@ -633,7 +657,7 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function ajax_add_geschenk() {
-        check_ajax_referer('geschenkeliste_admin_nonce', 'nonce');
+        check_ajax_referer('hochzeit_geschenkeliste_admin_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Keine Berechtigung.'));
@@ -660,7 +684,7 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function ajax_update_geschenk() {
-        check_ajax_referer('geschenkeliste_admin_nonce', 'nonce');
+        check_ajax_referer('hochzeit_geschenkeliste_admin_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Keine Berechtigung.'));
@@ -688,7 +712,7 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function ajax_delete_geschenk() {
-        check_ajax_referer('geschenkeliste_admin_nonce', 'nonce');
+        check_ajax_referer('hochzeit_geschenkeliste_admin_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Keine Berechtigung.'));
@@ -708,7 +732,7 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function ajax_cancel_reservation() {
-        check_ajax_referer('geschenkeliste_admin_nonce', 'nonce');
+        check_ajax_referer('hochzeit_geschenkeliste_admin_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Keine Berechtigung.'));
@@ -735,7 +759,7 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function ajax_get_geschenk() {
-        check_ajax_referer('geschenkeliste_admin_nonce', 'nonce');
+        check_ajax_referer('hochzeit_geschenkeliste_admin_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Keine Berechtigung.'));
@@ -768,12 +792,12 @@ class Hochzeit_Geschenkeliste {
     private function send_verification_email($email, $name, $geschenk, $token) {
         $site_url = home_url();
         $verify_url = add_query_arg(array(
-            'action' => 'verify_reservation',
+            'action' => 'hochzeit_geschenkeliste_verify_reservation',
             'token' => $token
         ), $site_url);
 
         $cancel_url = add_query_arg(array(
-            'action' => 'cancel_reservation_guest',
+            'action' => 'hochzeit_geschenkeliste_cancel_reservation_guest',
             'token' => $token
         ), $site_url);
 
@@ -787,45 +811,34 @@ class Hochzeit_Geschenkeliste {
 
         $message = "
         <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: #0073aa; color: #fff; padding: 20px; text-align: center; }
-                .content { padding: 20px; background: #f9f9f9; }
-                .geschenk { background: #fff; padding: 15px; margin: 20px 0; border-left: 4px solid #0073aa; }
-                .button { display: inline-block; padding: 12px 24px; background: #0073aa; color: #fff !important; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
-                .button-cancel { background: #999; color: #fff !important; }
-                .footer { text-align: center; padding: 20px; color: #999; font-size: 12px; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <h1>🎁 Geschenk-Reservierung</h1>
+        <head></head>
+        <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+            <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                <div style='background: #0073aa; color: #fff; padding: 20px; text-align: center;'>
+                    <h1 style='margin: 0;'>🎁 Geschenk-Reservierung</h1>
                 </div>
-                <div class='content'>
+                <div style='padding: 20px; background: #f9f9f9;'>
                     <p>{$anrede},</p>
                     <p>vielen Dank für Deine Reservierung! Bitte bestätige diese, indem Du auf den untenstehenden Link klickst:</p>
 
-                    <div class='geschenk'>
+                    <div style='background: #fff; padding: 15px; margin: 20px 0; border-left: 4px solid #0073aa;'>
                         Geschenk reservieren:<br>
-                        <h3>{$geschenk_titel}</h3>
+                        <h3 style='margin: 10px 0;'>{$geschenk_titel}</h3>
                         " . ($geschenk_beschreibung ? "<p>{$geschenk_beschreibung}</p>" : "") . "
                     </div>
 
                     <p style='text-align: center;'>
-                        <a href='{$verify_url}' class='button'>Reservierung jetzt bestätigen</a>
+                        <a href='{$verify_url}' style='display: inline-block; padding: 12px 24px; background: #0073aa; color: #fff; text-decoration: none; border-radius: 5px; margin: 10px 5px;'>Reservierung jetzt bestätigen</a>
                     </p>
 
                     <p style='margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;'>
                         Reservierung stornieren?<br>
                         Falls Du es dir anders überlegt hast, kannst Du deine Reservierung hier stornieren:<br>
-                        <a href='{$cancel_url}' class='button button-cancel'>Reservierung stornieren</a></small>
+                        <a href='{$cancel_url}' style='display: inline-block; padding: 12px 24px; background: #999; color: #fff; text-decoration: none; border-radius: 5px; margin: 10px 5px;'>Reservierung stornieren</a>
                     </p>
                 </div>
-                <div class='footer'>
-                    <p>Diese E-Mail wurde automatisch generiert. Bitte antworte nicht darauf.</p>
+                <div style='text-align: center; padding: 20px; color: #999; font-size: 12px;'>
+                    <p style='margin: 0;'>Diese E-Mail wurde automatisch generiert. Bitte antworte nicht darauf.</p>
                 </div>
             </div>
         </body>
@@ -843,7 +856,7 @@ class Hochzeit_Geschenkeliste {
     public function handle_verification() {
         $action = $this->get_query_arg('action');
 
-        if ('verify_reservation' !== $action) {
+        if ('hochzeit_geschenkeliste_verify_reservation' !== $action) {
             return;
         }
 
@@ -911,7 +924,7 @@ class Hochzeit_Geschenkeliste {
     public function handle_cancellation() {
         $action = $this->get_query_arg('action');
 
-        if ('cancel_reservation_guest' !== $action) {
+        if ('hochzeit_geschenkeliste_cancel_reservation_guest' !== $action) {
             return;
         }
 

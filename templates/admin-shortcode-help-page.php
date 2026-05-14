@@ -13,13 +13,13 @@ if (!defined('ABSPATH')) {
             <p>Nutze folgenden Shortcode, um die Geschenkeliste auf einer Seite oder in einem Beitrag anzuzeigen:</p>
 
             <p>
-                <code>[geschenkeliste]</code>
+                <code>[hochzeit_geschenkeliste]</code>
             </p>
 
             <h3>Kurzanleitung</h3>
             <ol>
                 <li>Erstelle eine neue Seite oder bearbeite eine vorhandene Seite.</li>
-                <li>Füge den Shortcode <code>[geschenkeliste]</code> im Inhalt ein.</li>
+                <li>Füge den Shortcode <code>[hochzeit_geschenkeliste]</code> im Inhalt ein.</li>
                 <li>Seite veröffentlichen oder aktualisieren.</li>
                 <li>Im Frontend prüfen, ob die Geschenkeliste korrekt angezeigt wird.</li>
             </ol>

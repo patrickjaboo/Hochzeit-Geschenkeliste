@@ -76,15 +76,15 @@ jQuery(document).ready(function($) {
         e.preventDefault();
 
         const formData = {
-            action: 'add_geschenk',
-            nonce: geschenkelisteAdmin.nonce,
+            action: 'hochzeit_geschenkeliste_add_geschenk',
+            nonce: hochzeitGeschenkelisteAdmin.nonce,
             titel: $('#titel').val(),
             beschreibung: $('#beschreibung').val(),
             link: $('#link').val(),
             bild_url: $('#bild_url').val()
         };
 
-        $.post(geschenkelisteAdmin.ajax_url, formData, function(response) {
+        $.post(hochzeitGeschenkelisteAdmin.ajax_url, formData, function(response) {
             if (response.success) {
                 alert(response.data.message);
                 location.reload();
@@ -100,9 +100,9 @@ jQuery(document).ready(function($) {
         const id = $(this).data('id');
 
         // Hole Daten aus der Zeile
-        $.post(geschenkelisteAdmin.ajax_url, {
-            action: 'get_geschenk',
-            nonce: geschenkelisteAdmin.nonce,
+        $.post(hochzeitGeschenkelisteAdmin.ajax_url, {
+            action: 'hochzeit_geschenkeliste_get_geschenk',
+            nonce: hochzeitGeschenkelisteAdmin.nonce,
             id: id
         }, function(response) {
             if (response.success) {
@@ -126,7 +126,7 @@ jQuery(document).ready(function($) {
             }
         });
 
-        // Alternativ: Wenn get_geschenk nicht implementiert ist, aus DOM auslesen
+        // Alternativ: Wenn der AJAX-Endpunkt nicht implementiert ist, aus DOM auslesen
         // Dies ist eine einfachere Lösung, die ohne zusätzliche AJAX-Anfrage auskommt
         const titel = row.find('td:eq(1) strong').text();
         $('#edit_id').val(id);
@@ -140,8 +140,8 @@ jQuery(document).ready(function($) {
         e.preventDefault();
 
         const formData = {
-            action: 'update_geschenk',
-            nonce: geschenkelisteAdmin.nonce,
+            action: 'hochzeit_geschenkeliste_update_geschenk',
+            nonce: hochzeitGeschenkelisteAdmin.nonce,
             id: $('#edit_id').val(),
             titel: $('#edit_titel').val(),
             beschreibung: $('#edit_beschreibung').val(),
@@ -149,7 +149,7 @@ jQuery(document).ready(function($) {
             bild_url: $('#edit_bild_url').val()
         };
 
-        $.post(geschenkelisteAdmin.ajax_url, formData, function(response) {
+        $.post(hochzeitGeschenkelisteAdmin.ajax_url, formData, function(response) {
             if (response.success) {
                 alert(response.data.message);
                 location.reload();
@@ -167,9 +167,9 @@ jQuery(document).ready(function($) {
 
         const id = $(this).data('id');
 
-        $.post(geschenkelisteAdmin.ajax_url, {
-            action: 'delete_geschenk',
-            nonce: geschenkelisteAdmin.nonce,
+        $.post(hochzeitGeschenkelisteAdmin.ajax_url, {
+            action: 'hochzeit_geschenkeliste_delete_geschenk',
+            nonce: hochzeitGeschenkelisteAdmin.nonce,
             id: id
         }, function(response) {
             if (response.success) {
@@ -189,9 +189,9 @@ jQuery(document).ready(function($) {
 
         const geschenkId = $(this).data('id');
 
-        $.post(geschenkelisteAdmin.ajax_url, {
-            action: 'cancel_reservation',
-            nonce: geschenkelisteAdmin.nonce,
+        $.post(hochzeitGeschenkelisteAdmin.ajax_url, {
+            action: 'hochzeit_geschenkeliste_cancel_reservation',
+            nonce: hochzeitGeschenkelisteAdmin.nonce,
             geschenk_id: geschenkId
         }, function(response) {
             if (response.success) {
