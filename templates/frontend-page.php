@@ -12,11 +12,11 @@ if (!defined('ABSPATH')) {
         <p class="no-geschenke"><?php echo esc_html($frontend_texts['empty']); ?></p>
     <?php else: ?>
         <div class="geschenke-grid">
-            <?php foreach ($geschenke as $geschenkeliste_geschenk): ?>
-                <div class="geschenk-item <?php echo $geschenkeliste_geschenk->ist_reserviert ? 'reserved' : 'available'; ?>" data-id="<?php echo esc_attr($geschenkeliste_geschenk->id); ?>">
+            <?php foreach ($geschenke as $hochzeit_geschenkeliste_geschenk): ?>
+                <div class="geschenk-item <?php echo $hochzeit_geschenkeliste_geschenk->ist_reserviert ? 'reserved' : 'available'; ?>" data-id="<?php echo esc_attr($hochzeit_geschenkeliste_geschenk->id); ?>">
                     <div class="geschenk-image">
-                        <?php if ($geschenkeliste_geschenk->bild_url): ?>
-                            <img src="<?php echo esc_url($geschenkeliste_geschenk->bild_url); ?>" alt="<?php echo esc_attr($geschenkeliste_geschenk->titel); ?>">
+                        <?php if ($hochzeit_geschenkeliste_geschenk->bild_url): ?>
+                            <img src="<?php echo esc_url($hochzeit_geschenkeliste_geschenk->bild_url); ?>" alt="<?php echo esc_attr($hochzeit_geschenkeliste_geschenk->titel); ?>">
                         <?php else: ?>
                             <div class="placeholder-image">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
@@ -29,7 +29,7 @@ if (!defined('ABSPATH')) {
                                 </svg>
                             </div>
                         <?php endif; ?>
-                        <?php if ($geschenkeliste_geschenk->ist_reserviert): ?>
+                        <?php if ($hochzeit_geschenkeliste_geschenk->ist_reserviert): ?>
                             <div class="reserved-overlay">
                                 <span class="reserved-badge">Bereits vergeben</span>
                             </div>
@@ -37,27 +37,27 @@ if (!defined('ABSPATH')) {
                     </div>
 
                     <div class="geschenk-content">
-                        <h3 class="geschenk-titel"><?php echo esc_html($geschenkeliste_geschenk->titel); ?></h3>
+                        <h3 class="geschenk-titel"><?php echo esc_html($hochzeit_geschenkeliste_geschenk->titel); ?></h3>
 
-                        <?php if ($geschenkeliste_geschenk->beschreibung): ?>
-                            <p class="geschenk-beschreibung"><?php echo wp_kses_post($geschenkeliste_geschenk->beschreibung); ?></p>
+                        <?php if ($hochzeit_geschenkeliste_geschenk->beschreibung): ?>
+                            <p class="geschenk-beschreibung"><?php echo wp_kses_post($hochzeit_geschenkeliste_geschenk->beschreibung); ?></p>
                         <?php endif; ?>
 
-                        <?php if ($geschenkeliste_geschenk->link): ?>
+                        <?php if ($hochzeit_geschenkeliste_geschenk->link): ?>
                             <p class="geschenk-link">
-                                <a href="<?php echo esc_url($geschenkeliste_geschenk->link); ?>" target="_blank" rel="noopener noreferrer">
+                                <a href="<?php echo esc_url($hochzeit_geschenkeliste_geschenk->link); ?>" target="_blank" rel="noopener noreferrer">
                                     <span class="dashicons dashicons-admin-links"></span> Zum Shop
                                 </a>
                             </p>
                         <?php endif; ?>
 
                         <div class="geschenk-actions">
-                            <?php if ($geschenkeliste_geschenk->ist_reserviert): ?>
+                            <?php if ($hochzeit_geschenkeliste_geschenk->ist_reserviert): ?>
                                 <span class="status-info reserved-info">
                                     <span class="dashicons dashicons-yes-alt"></span> Vergeben
                                 </span>
                             <?php else: ?>
-                                <button class="button-reserve" data-id="<?php echo esc_attr($geschenkeliste_geschenk->id); ?>">
+                                <button class="button-reserve" data-id="<?php echo esc_attr($hochzeit_geschenkeliste_geschenk->id); ?>">
                                     <?php echo esc_html($frontend_texts['reserve_button']); ?>
                                 </button>
                             <?php endif; ?>
