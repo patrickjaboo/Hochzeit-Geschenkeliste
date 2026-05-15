@@ -17,6 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 define('HOCHZEIT_GESCHENKELISTE_VERSION', '1.1.0');
+define('HOCHZEIT_GESCHENKELISTE_DB_VERSION', '1.1.1');
 
 class Hochzeit_Geschenkeliste {
 
@@ -35,6 +36,7 @@ class Hochzeit_Geschenkeliste {
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
 
+        add_action('init', array($this, 'maybe_upgrade_database'));
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_init', array($this, 'register_privacy_policy_content'));
         add_action('admin_init', array($this, 'register_frontend_text_settings'));
@@ -61,6 +63,18 @@ class Hochzeit_Geschenkeliste {
     }
 
     public function activate() {
+        $this->install_database_schema();
+    }
+
+    public function maybe_upgrade_database() {
+        if (get_option('hochzeit_geschenkeliste_db_version') === HOCHZEIT_GESCHENKELISTE_DB_VERSION) {
+            return;
+        }
+
+        $this->install_database_schema();
+    }
+
+    private function install_database_schema() {
         global $wpdb;
 
         $charset_collate = $wpdb->get_charset_collate();
@@ -89,6 +103,7 @@ class Hochzeit_Geschenkeliste {
         ) $charset_collate;";
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        $this->migrate_legacy_tables();
         dbDelta($sql_geschenke);
         dbDelta($sql_reservierungen);
 
@@ -112,6 +127,8 @@ class Hochzeit_Geschenkeliste {
         if (!wp_next_scheduled(self::CLEANUP_HOOK)) {
             wp_schedule_event(time(), 'hourly', self::CLEANUP_HOOK);
         }
+
+        update_option('hochzeit_geschenkeliste_db_version', HOCHZEIT_GESCHENKELISTE_DB_VERSION);
     }
 
     public function deactivate() {
@@ -223,6 +240,34 @@ class Hochzeit_Geschenkeliste {
 
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public email links are authenticated with a single-use random token instead of a nonce.
         return sanitize_text_field(wp_unslash($_GET[$key]));
+    }
+
+    private function database_table_exists($table_name) {
+        global $wpdb;
+
+        $escaped_table = esc_sql($table_name);
+
+        return $escaped_table === $this->db_get_var(
+            $this->db_prepare(
+                'SHOW TABLES LIKE %s',
+                $escaped_table
+            )
+        );
+    }
+
+    private function migrate_legacy_tables() {
+        global $wpdb;
+
+        $legacy_table_name = $wpdb->prefix . 'geschenkeliste';
+        $legacy_table_reservations = $wpdb->prefix . 'geschenkeliste_reservierungen';
+
+        if ($this->database_table_exists($legacy_table_name) && !$this->database_table_exists($this->table_name)) {
+            $this->db_query('RENAME TABLE ' . esc_sql($legacy_table_name) . ' TO ' . esc_sql($this->table_name));
+        }
+
+        if ($this->database_table_exists($legacy_table_reservations) && !$this->database_table_exists($this->table_reservations)) {
+            $this->db_query('RENAME TABLE ' . esc_sql($legacy_table_reservations) . ' TO ' . esc_sql($this->table_reservations));
+        }
     }
 
     private function migrate_legacy_options() {

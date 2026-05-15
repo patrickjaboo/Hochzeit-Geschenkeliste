@@ -15,6 +15,8 @@ if ($hochzeit_geschenkeliste_timestamp) {
     wp_unschedule_event($hochzeit_geschenkeliste_timestamp, 'hochzeit_geschenkeliste_cleanup');
 }
 
+delete_option('hochzeit_geschenkeliste_db_version');
+
 if (defined('HOCHZEIT_GESCHENKELISTE_DELETE_DATA_ON_UNINSTALL') && HOCHZEIT_GESCHENKELISTE_DELETE_DATA_ON_UNINSTALL) {
     global $wpdb;
 
